@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Annuity / Investment Calculator</title>
+
+<style>
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  max-width: 700px;
+  margin: 40px auto;
+}
+.row { margin: 20px 0; }
+.value { float: right; font-weight: bold; }
+.result {
+  margin-top: 30px;
+  padding: 15px;
+  background: #f2f2f2;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Annuity / Investment Calculator</h2>
+
+<div class="row">
+  Expected Return (%)
+  <span id="rVal" class="value"></span><br>
+  <input type="range" id="r" min="0" max="10" step="0.01" value="4">
+</div>
+
+<div class="row">
+  Monthly Withdrawal ($) Starts @ 65 years old
+  <span id="wVal" class="value"></span><br>
+  <input type="range" id="w" min="100" max="5000" step="100" value="2000">
+</div>
+
+<div class="row">
+  Payout Duration (Years)
+  <span id="yVal" class="value"></span><br>
+  <input type="range" id="y" min="5" max="50" step="5" value="20">
+</div>
+
+<div class="row">
+  Starting Age of Annuity / Investment
+  <span id="aVal" class="value"></span><br>
+  <input type="range" id="a" min="25" max="65" step="1" value="40">
+</div>
+
+<div class="result">
+  <p><b>Principal Amount</b></p>
+  <p><b>Depleting :</b> $<span id="dep"></span></p>
+  <p><b>Non-Depleting :</b> $<span id="nondep"></span></p>
+</div>
+
+<script>
+function format(x){
+  return Math.round(x).toLocaleString();
+}
+
+function snapRate(val){
+  if (val < 0.5) return 0.05;
+  return Math.round(val * 2) / 2;
+}
+
+function calculate(){
+  const rEl = document.getElementById("r");
+  const yEl = document.getElementById("y");
+  const wEl = document.getElementById("w");
+  const aEl = document.getElementById("a");
+
+  const depEl = document.getElementById("dep");
+  const nondepEl = document.getElementById("nondep");
+  const rValEl = document.getElementById("rVal");
+  const yValEl = document.getElementById("yVal");
+  const wValEl = document.getElementById("wVal");
+  const aValEl = document.getElementById("aVal");
+
+  let rawR = parseFloat(rEl.value);
+  let snappedR = snapRate(rawR);
+  rEl.value = snappedR;
+
+  let rValDec = snappedR / 100;
+  let years = +yEl.value;
+  let withdrawal = +wEl.value;
+  let startAge = +aEl.value;
+
+  let months = years * 12;
+  let i = rValDec / 12;
+  let yearsTo65 = 65 - startAge;
+
+  let pvDep, pvNonDep;
+
+  if (i === 0){
+    pvDep = withdrawal * months;
+  } else {
+    pvDep = withdrawal * (1 - Math.pow(1 + i, -months)) / i;
+  }
+
+  if (i === 0){
+    pvNonDep = Infinity;
+  } else {
+    pvNonDep = withdrawal / i;
+  }
+
+  let depToday = pvDep / Math.pow(1 + rValDec, yearsTo65);
+  let nonDepToday = (pvNonDep === Infinity) ? Infinity :
+                    pvNonDep / Math.pow(1 + rValDec, yearsTo65);
+
+  depEl.textContent = isFinite(depToday) ? format(depToday) : "-";
+  nondepEl.textContent = isFinite(nonDepToday) ? format(nonDepToday) : "-";
+
+  rValEl.textContent = snappedR + "%";
+  yValEl.textContent = yEl.value;
+  wValEl.textContent = "$" + wEl.value;
+  aValEl.textContent = aEl.value;
+}
+
+function updateUI(){
+  calculate();
+}
+
+// ✅ Run only after DOM is ready
+window.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("input").forEach(el => {
+    el.addEventListener("input", updateUI);
+    el.addEventListener("change", updateUI);
+  });
+  updateUI();
+});
+</script>
+
+</body>
+</html>
+
